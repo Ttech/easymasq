@@ -45,8 +45,14 @@ done <"$1"
 # and complete
 if [ -f $TMP ]; then
 	echo "complete... new file located at $2"
-	cat $TMP | sort | uniq > $2
-	rm "$TMP" 2>/dev/null
+	if [ $# -gt 2 -a "$3" == "plain" ]; then
+		cat $TMP | sort | uniq > $2
+	else
+		cat $TMP | sort | uniq | sed -e "s/^\(.*\)/0.0.0.0 \1/g" > $2
+	fi
+	if [ -f "$2" ]; then
+		rm "$TMP" 2>/dev/null
+	fi
 else
 	echo "completed temp file is missing, cannot copy to destination"
 fi
