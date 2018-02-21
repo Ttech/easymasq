@@ -32,6 +32,9 @@ do
 				# its easy list
 				echo "processing easylist file from $list as $LTMP"
 				grep -v "^#" $LTMP | sed -n "s/||\(.*\)\^.*/\1/p">>$TMP
+			elif grep -q "address="; then
+				# its a dnsmasq list
+				grep -v "^#" $LTMP | sed -n "s/address=\/\(.*\)\/.*/\1/p">>$TMP
 			else
 				# its not an easy list
 				echo "processing dns list file from $list as $LTMP"
