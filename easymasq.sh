@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 # a simple, easy to use shell downloader
 # you will need wget or curl, sed, and tr to make this run
 # supports easylist files and adblock/dns blacklisting files (host files etc)
