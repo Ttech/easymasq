@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 # a simple, easy to use shell downloader
 # you will need wget or curl, sed, and tr to make this run
 # supports easylist files and adblock/dns blacklisting files (host files etc)
@@ -17,9 +17,9 @@ pull(){
 	fi
 }
 
-if [ $# -ne 2 ]; then
+if [ $# -lt 2 ]; then
 	echo "invalid arguments"
-	echo "command [SOURCE LIST] [DESTINATION]"
+	echo "command SOURCE DESINATION [type] [whitelist]"
 	exit 1
 fi
 
@@ -30,14 +30,11 @@ do
 		if [ -f $LTMP ]; then
 			if grep -q "||.*^" $LTMP; then
 				# its easy list
-				echo "processing easylist file from $list as $LTMP"
-				grep -v "^#" $LTMP | sed -n "s/||\(.*\)\^.*/\1/p">>$TMP
-			elif grep -q "address="; then
-				# its a dnsmasq list
-				grep -v "^#" $LTMP | sed -n "s/address=\/\(.*\)\/.*/\1/p">>$TMP
+				logger "processing easylist file from $list as $LTMP"
+				grep -v "^#" $LTMP | sed -n "s/||\(.*\)\^.*/\1/p" | grep -v "@@" >>$TMP
 			else
 				# its not an easy list
-				echo "processing dns list file from $list as $LTMP"
+				logger "processing dns list file from $list as $LTMP"
 				grep -v "^#" $LTMP | sed -e "s/127.0.0.1//g" -e "s/0.0.0.0//g" | tr -d "[:blank:]">>$TMP
 			fi
 			rm "$LTMP"
@@ -47,7 +44,14 @@ done <"$1"
 
 # and complete
 if [ -f $TMP ]; then
-	echo "complete... new file located at $2"
+	logger "complete... new file located at $2"
+	if [ -f $4 ]; then
+		while IFS= read -r whitelist
+		do
+			echo "removing $whitelist from final list due to being whitelisted"
+			sed -i "/$whitelist/d" $TMP
+		done < "$4"
+	fi
 	if [ $# -gt 2 -a "$3" == "plain" ]; then
 		cat $TMP | sort | uniq > $2
 	else
@@ -57,5 +61,5 @@ if [ -f $TMP ]; then
 		rm "$TMP" 2>/dev/null
 	fi
 else
-	echo "completed temp file is missing, cannot copy to destination"
+	logger "completed temp file is missing, cannot copy to destination"
 fi
